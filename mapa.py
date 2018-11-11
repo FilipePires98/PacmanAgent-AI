@@ -102,4 +102,3 @@ class Map:
             return cur
    
         return npos
-    
