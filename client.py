@@ -26,8 +26,10 @@ async def agent_loop(server_address = "localhost:8000", agent_name="student"):
         while True: 
             r = await websocket.recv()
             state = json.loads(r) #receive game state
+
             if len(state['energy'])==0:
                 break
+            
             if not state['lives']:
                 print("GAME OVER")
                 return
