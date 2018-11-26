@@ -23,6 +23,7 @@ async def agent_loop(server_address = "localhost:8000", agent_name="student"):
         #init agent properties 
         key = None
         cur_x, cur_y = None, None
+        map_center = None
         while True: 
             r = await websocket.recv()
             state = json.loads(r) #receive game state
@@ -42,6 +43,11 @@ async def agent_loop(server_address = "localhost:8000", agent_name="student"):
             eatableG=[]
             runG=[]
 
+            if map_center==None and state['ghosts']!=[]:
+                map_center = tuple(state['ghosts'][0][0])
+            if map_center!=None:
+                runG.append(map_center)
+
             for g in state['ghosts']:
             	eatGhost=eatGhost or g[1]
             	ghosts.append(g[0])
@@ -50,24 +56,27 @@ async def agent_loop(server_address = "localhost:8000", agent_name="student"):
             	else:
             		runG.append(g[0])
 
-            p=SearchProblem(pacman, tuple(state['pacman']))
+            p = SearchProblem(pacman, tuple(state['pacman']))
             t = SearchTree(p, state['energy'], state['boost'], ghosts)
             #print(len(state['energy']), len(state['boost']), len(ghosts))
-
+            '''
             if eatGhost and len(ghosts)>0:
-            	key=t.searchGhost(eatableG, runG)
+                eatableG = [eg for eg in eatableG if pacman.d8(eg,runG)] 
+                if eatableG!=[]:
+                    key=t.searchGhost(eatableG, runG)
+                else:
+                    key = t.search()
             else:
-            	key = t.search()
+                key = t.search()
             '''
-            if x == cur_x and y == cur_y:
-                if key in "ad":
-                    key = random.choice("ws")
-                elif key in "ws":
-                    key = random.choice("ad")
-            cur_x, cur_y = x, y
-            '''
+            key=t.searchGhost(state['boost'], runG)
             #send new key
             await websocket.send(json.dumps({"cmd": "key", "key": key}))
+
+            final_score = state['score']
+    f=open("scores.txt", "a")
+    f.write(str(final_score)+"\n")
+    f.close()
 
 
 loop = asyncio.get_event_loop()

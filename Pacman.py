@@ -35,11 +35,8 @@ class Pacman(SearchDomain):
                 aux=(aux[0],(aux[1]+1)%yOut)
         return cost
 
-
-
     def heuristic(self,state, closestEnergy, energies, boosts, ghosts):
-        return (len(energies)*10+len(boosts)*20) + self.costFromTo(state, closestEnergy)
-    
+        return (len(energies)*10+len(boosts)) + self.costFromTo(state, closestEnergy)
 
     def heuristicGhost(self,state, closestGhost):
         return self.costFromTo(state, closestGhost)
@@ -57,7 +54,6 @@ class Pacman(SearchDomain):
             dists=[min([abs(x[1][0]-g[0])+abs(x[1][1]-g[1]) for g in ghosts]) for x in aux]
             act=[actions[dists.index(max(dists))]]
         return act
-
 
     def ghostInPath(self, action, ghosts):
         ret=False
@@ -97,7 +93,6 @@ class Pacman(SearchDomain):
                         break
                     aux=((aux[0]+1)%xOut, aux[1])
         return ret
-
 
     '''
     def runAway(self, actions, ghosts):
@@ -239,7 +234,7 @@ class Pacman(SearchDomain):
                 aux=(aux[0],(aux[1]+1)%yOut)
         return [x for x in energy if tuple(x) not in path]
 
-    def remainingBoosts(self, node, state,boost):
+    def remainingBoosts(self, node, state, boost):
         xOut=self.mapa.size[0]-1
         yOut=self.mapa.size[1]-1
         direction=self.getDirection(node, state)
@@ -260,7 +255,6 @@ class Pacman(SearchDomain):
     def isNode(self, state):
         return state in self.nodes
 
-
     '''
     def getClosest(self, state, Energies):
         minimo=min([sqrt((state[0]-x[0])**2 + (state[1]-x[1])**2) for x in Energies])
@@ -274,3 +268,23 @@ class Pacman(SearchDomain):
         minimo2=min([(abs(Energy[0]-x[0])+abs(Energy[1]-x[1])) for x in self.nodes])
         node=[x for x in self.nodes if (abs(Energy[0]-x[0])+abs(Energy[1]-x[1]))==minimo2][0]
         return node
+
+    def d8(self, cell, ghosts):
+        if (cell[0], cell[1]+1) in ghosts:
+            return False
+        if (cell[0], cell[1]-1) in ghosts:
+            return False
+        if (cell[0]+1, cell[1]) in ghosts:
+            return False
+        if (cell[0]-1, cell[1]) in ghosts:
+            return False
+        if (cell[0]+1, cell[1]+1) in ghosts:
+            return False
+        if (cell[0]+1, cell[1]-1) in ghosts:
+            return False
+        if (cell[0]-1, cell[1]+1) in ghosts:
+            return False
+        if (cell[0]-1, cell[1]-1) in ghosts:
+            return False
+
+        return True
