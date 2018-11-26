@@ -54,7 +54,7 @@ class SearchProblem:
 
 # Nos de uma arvore de pesquisa
 class SearchNode:
-    def __init__(self,state,parent, energy, boost, direction=None, cost=0, heuristic=0): 
+    def __init__(self,state,parent, energy=[], boost=[], direction=None, cost=0, heuristic=0): 
         self.state = state
         self.parent = parent
         self.direction=direction
@@ -124,8 +124,9 @@ class SearchTree:
                 newstate = self.problem.domain.result(node.state,a)
                 if not self.is_parent(newstate, node):
                     direct=self.problem.domain.getDirection(node.state,newstate)
-                    lnewnodes += [SearchNode(newstate,node, None, None,direct, node.cost+self.problem.domain.cost(a), self.problem.domain.heuristicGhost(newstate, closestGhost))]
+                    lnewnodes += [SearchNode(newstate,node, [], [],direct, node.cost+self.problem.domain.cost(a), self.problem.domain.heuristicGhost(newstate, closestGhost))]
             self.add_to_open(lnewnodes)
+            print(self.open_nodes)
             return self.open_nodes[0].direction
         return None
 

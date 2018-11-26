@@ -49,14 +49,13 @@ class Pacman(SearchDomain):
     def runAway(self, actions, ghosts):
         if ghosts==[]:
             return actions
-        print("act", actions)
         aux=[x for x in actions if not self.ghostInPath(x, ghosts)]
-        print(aux)
-        act=[x for x in aux if min([abs(x[1][0]-g[0])+abs(x[1][1]-g[1]) for g in ghosts])>3]
+        if len(aux)==0:
+            aux=actions
+        act=[x for x in aux if min([abs(x[1][0]-g[0])+abs(x[1][1]-g[1]) for g in ghosts])>2]
         if act==[]:
             dists=[min([abs(x[1][0]-g[0])+abs(x[1][1]-g[1]) for g in ghosts]) for x in aux]
             act=[actions[dists.index(max(dists))]]
-        print("a", act)
         return act
 
 
