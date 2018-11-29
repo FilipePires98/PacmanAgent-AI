@@ -188,7 +188,7 @@ class Pacman(SearchDomain):
     def heuristicGhost(self,state, eatableG, closestGhost,act):
         ghst=[list(x) for x in eatableG if abs(x[0]-closestGhost[0])+abs(x[1]-closestGhost[1])==min(abs(y[0]-closestGhost[0])+abs(y[1]-closestGhost[1]) for y in eatableG)]
         cst=self.costFromTo(state, closestGhost)
-        notInPath=1000+cst if not self.ghostInPath(act, ghst) else cst
+        notInPath=100+cst if not self.ghostInPath(act, ghst) else -cst
         return notInPath
 
     # aux functions
