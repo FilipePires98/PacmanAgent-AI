@@ -88,7 +88,7 @@ class SearchTree:
     '''
 
     # procurar a solucao
-    def search(self):
+    def search(self, getBoost):
         while self.open_nodes != []:
             #for z in range(5):
             node = self.open_nodes.pop(0)
@@ -105,16 +105,16 @@ class SearchTree:
                     direct=self.problem.domain.getDirection(node.state,newstate) if node.direction==None else node.direction
                     #else:
                     #    direct=node.direction
-                    lnewnodes += [SearchNode(newstate, node, energies, boosts, direct, node.cost+self.problem.domain.cost(a), self.problem.domain.heuristic(newstate, closestEnergy, energies, boosts, self.ghost,a))]
+                    lnewnodes += [SearchNode(newstate, node, energies, boosts, direct, node.cost+self.problem.domain.cost(a), self.problem.domain.heuristic(newstate, closestEnergy, energies, boosts, node.boost, self.ghost,a, getBoost))]
             self.add_to_open(lnewnodes)
-            
+            #print(self.open_nodes)
             return self.open_nodes[0].direction
         return None
 
     def searchGhost(self, eatableG, runG):
         while self.open_nodes != []:
             node = self.open_nodes.pop(0)
-            closestGhost=self.problem.domain.getClosest(node.state, [ghost for ghost in eatableG if self.problem.domain.d8(ghost,runG)])
+            closestGhost=self.problem.domain.getClosest(node.state,eatableG)
             if closestGhost==[]:
                 return None
             lnewnodes = []
@@ -123,9 +123,9 @@ class SearchTree:
                 newstate = self.problem.domain.result(node.state,a)
                 if not self.is_parent(newstate, node):
                     direct=self.problem.domain.getDirection(node.state,newstate)
-                    lnewnodes += [SearchNode(newstate,node, [], [],direct, node.cost+self.problem.domain.cost(a), self.problem.domain.heuristicGhost(newstate, closestGhost,a))]
+                    lnewnodes += [SearchNode(newstate,node, [], [],direct, node.cost+self.problem.domain.cost(a), self.problem.domain.heuristicGhost(newstate, eatableG, closestGhost,a))]
             self.add_to_open(lnewnodes)
-            print(self.open_nodes)
+            #print(self.open_nodes)
             return self.open_nodes[0].direction
         return None
 
@@ -179,11 +179,16 @@ class Pacman(SearchDomain):
                 aux=(aux[0],(aux[1]+1)%yOut)
         return cost
 
-    def heuristic(self,state, closestEnergy, energies, boosts, ghosts,act):
-        return (len(energies)*10+len(boosts)) + self.costFromTo(state, closestEnergy)# + run
+    def heuristic(self,state, closestEnergy, energies,remboosts, boosts, ghosts,act, getBoost):
+        if getBoost and boosts!=[]:
+            return (len(energies)*5+len(remboosts)) + self.costFromTo(state, self.getClosest(state, boosts))
+        else:
+            return (len(energies)*10+len(remboosts)) + self.costFromTo(state, closestEnergy)
 
-    def heuristicGhost(self,state, closestGhost,act):
-        notInPath=200 if self.ghostInPath(act, [list(closestGhost)]) else self.costFromTo(state, closestGhost)
+    def heuristicGhost(self,state, eatableG, closestGhost,act):
+        ghst=[list(x) for x in eatableG if abs(x[0]-closestGhost[0])+abs(x[1]-closestGhost[1])==min(abs(y[0]-closestGhost[0])+abs(y[1]-closestGhost[1]) for y in eatableG)]
+        cst=self.costFromTo(state, closestGhost)
+        notInPath=1000+cst if not self.ghostInPath(act, ghst) else cst
         return notInPath
 
     # aux functions
@@ -206,42 +211,21 @@ class Pacman(SearchDomain):
         yOut=self.mapa.size[1]-1
         s1,s2=action
         aux=s1
-        run=True
-        print(ghosts)
-        while run:
-            if aux==s2 and s2 not in ghosts:
-                run=False
-                break
-            if aux==s2:
-                run=False
+        direction=self.getDirection(s1,s2)
+        while aux!=s2:
+            if list(aux) in ghosts:
                 ret=True
                 break
-            if s1[0]==s2[0]:
-                if s1[1]>s2[1]:
-                    if list(aux) in ghosts:
-                        ret=True
-                        run=False
-                        break
-                    aux=(aux[0], yOut if (aux[1]-1)==-1 else (aux[1]-1))
-                else:
-                    if list(aux) in ghosts:
-                        ret= True
-                        run=False
-                        break
-                    aux=(aux[0], (aux[1]+1)%yOut)
-            if s1[1]==s2[1]:
-                if s1[0]>s2[0]:
-                    if list(aux) in ghosts:
-                        ret= True
-                        run=False
-                        break
-                    aux=(xOut if (aux[0]-1)==-1 else (aux[0]-1), aux[1])
-                else:
-                    if list(aux) in ghosts:
-                        ret= True
-                        run=False
-                        break
-                    aux=((aux[0]+1)%xOut, aux[1])
+            if direction=='a':
+                aux=((xOut if (aux[0]-1==-1) else (aux[0]-1)),aux[1])
+            if direction=='d':
+                aux=((aux[0]+1)%xOut,aux[1])
+            if direction=='w':
+                aux=(aux[0],(yOut if (aux[1]-1)==-1 else (aux[1]-1)))
+            if direction=='s':
+                aux=(aux[0],(aux[1]+1)%yOut)
+        if list(s2) in ghosts:
+            ret=True
         return ret
 
 

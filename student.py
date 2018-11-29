@@ -49,36 +49,48 @@ async def agent_loop(server_address = "localhost:8000", agent_name="student"):
                 runG.append(map_center)
 
             for g in state['ghosts']:
-            	eatGhost=eatGhost or g[1]
-            	ghosts.append(g[0])
-            	if g[1]==True:
-            		eatableG.append(g[0])
-            	else:
-            		runG.append(g[0])
+                eatGhost=eatGhost or g[1]
+                ghosts.append(g[0])
+                if g[1]==True:
+                    eatableG.append(g)
+                else:
+                    runG.append(g[0])
+
+
+            energies=[x for x in state['energy'] if all(abs(x[0]-y[0])+abs(x[1]-y[1])>3 for y in state['boost'])]
+            if any(abs(state['pacman'][0]-z[0][0])+abs(state['pacman'][1]-z[0][1])<3 for z in state['ghosts']):
+                getBoost=True
+            else:
+                getBoost=False
+            if energies==[]:
+                energies=state['energy']
 
             p = SearchProblem(pacman, tuple(state['pacman']))
-            t = SearchTree(p, state['energy'], state['boost'], ghosts)
+            t = SearchTree(p, energies, state['boost'], runG)
             #print(len(state['energy']), len(state['boost']), len(ghosts))
-            '''
+            eatableG=[x[0] for x in eatableG if (abs(state['pacman'][0]-x[0][0])+abs(state['pacman'][1]-x[0][1]))<x[2]]
+
             if eatGhost and len(ghosts)>0:
                 eatableG = [eg for eg in eatableG if pacman.d8(eg,runG)] 
                 if eatableG!=[]:
                     key=t.searchGhost(eatableG, runG)
                 else:
-                    key = t.search()
+                    key = t.search(getBoost)
             else:
-                key = t.search()
-            '''
-            key=t.searchGhost(state['boost'], runG)
+                key = t.search(getBoost)
+            
+            #key=t.searchGhost(state['boost'], runG)
             #send new key
             await websocket.send(json.dumps({"cmd": "key", "key": key}))
 
             final_score = state['score']
-    f=open("scores.txt", "a")
-    f.write(str(final_score)+"\n")
-    f.close()
+    #f=open("scores.txt", "a")
+    #f.write(str(final_score)+"\n")
+    #f.close()
 
 
+
+#pacman-aulas.ws.atnog.av.it.pt
 loop = asyncio.get_event_loop()
 SERVER = os.environ.get('SERVER', 'localhost')
 PORT = os.environ.get('PORT', '8000')
