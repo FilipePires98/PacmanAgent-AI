@@ -5,7 +5,6 @@ import asyncio
 import websockets
 import os
 from mapa import Map
-from Pacman import Pacman
 from Tree import *
 
 async def agent_loop(server_address = "localhost:8000", agent_name="student"):
@@ -90,9 +89,10 @@ async def agent_loop(server_address = "localhost:8000", agent_name="student"):
 
 
 
-#pacman-aulas.ws.atnog.av.it.pt
 loop = asyncio.get_event_loop()
 SERVER = os.environ.get('SERVER', 'localhost')
+#SERVER = os.environ.get('SERVER', 'pacman-aulas.ws.atnog.av.it.pt')
+#PORT = os.environ.get('PORT', '80')
 PORT = os.environ.get('PORT', '8000')
 NAME = os.environ.get('NAME', '85048_85122')
 loop.run_until_complete(agent_loop("{}:{}".format(SERVER,PORT), NAME))
