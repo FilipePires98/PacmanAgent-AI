@@ -107,7 +107,7 @@ class SearchTree:
                     #    direct=node.direction
                     lnewnodes += [SearchNode(newstate, node, energies, boosts, direct, node.cost+self.problem.domain.cost(a), self.problem.domain.heuristic(newstate, closestEnergy, energies, boosts, node.boost, self.ghost,a, getBoost))]
             self.add_to_open(lnewnodes)
-            #print(self.open_nodes)
+            print(self.open_nodes)
             return self.open_nodes[0].direction
         return None
 
@@ -181,14 +181,14 @@ class Pacman(SearchDomain):
 
     def heuristic(self,state, closestEnergy, energies,remboosts, boosts, ghosts,act, getBoost):
         if getBoost and boosts!=[]:
-            return (len(energies)*5+len(remboosts)) + self.costFromTo(state, self.getClosest(state, boosts))
+            return ((len(energies)*5+len(remboosts)) + self.costFromTo(state, self.getClosest(state, boosts))) if not any(self.ghostInPath(act, x) for x in boosts) else 0
         else:
             return (len(energies)*10+len(remboosts)) + self.costFromTo(state, closestEnergy)
 
     def heuristicGhost(self,state, eatableG, closestGhost,act):
         ghst=[list(x) for x in eatableG if abs(x[0]-closestGhost[0])+abs(x[1]-closestGhost[1])==min(abs(y[0]-closestGhost[0])+abs(y[1]-closestGhost[1]) for y in eatableG)]
         cst=self.costFromTo(state, closestGhost)
-        notInPath=100+cst if not self.ghostInPath(act, ghst) else -cst
+        notInPath=1000+cst if not self.ghostInPath(act, ghst) else cst
         return notInPath
 
     # aux functions

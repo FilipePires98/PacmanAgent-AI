@@ -67,7 +67,7 @@ async def agent_loop(server_address = "localhost:8000", agent_name="student"):
             p = SearchProblem(pacman, tuple(state['pacman']))
             t = SearchTree(p, energies, state['boost'], runG)
             #print(len(state['energy']), len(state['boost']), len(ghosts))
-            eatableG=[x[0] for x in eatableG if (abs(state['pacman'][0]-x[0][0])+abs(state['pacman'][1]-x[0][1]))<x[2]]
+            eatableG=[x[0] for x in eatableG if (abs(state['pacman'][0]-x[0][0])+abs(state['pacman'][1]-x[0][1]))<5] #x[2]
 
             if eatGhost and len(ghosts)>0:
                 eatableG = [eg for eg in eatableG if pacman.d8(eg,runG)] 
