@@ -199,11 +199,12 @@ class Pacman(SearchDomain):
         aux=[x for x in actions if not self.ghostInPath(x, ghosts)]
         if len(aux)==0:
             aux=actions
-        act=[x for x in aux if min([abs(x[1][0]-g[0])+abs(x[1][1]-g[1]) for g in ghosts])>2]
+        act=[x for x in aux if min([abs(x[1][0]-g[0])+abs(x[1][1]-g[1]) for g in ghosts])>1]
         if act==[]:
             dists=[min([abs(x[1][0]-g[0])+abs(x[1][1]-g[1]) for g in ghosts]) for x in aux]
             act=[actions[dists.index(max(dists))]]
         return act
+
 
     def ghostInPath(self, action, ghosts):
         ret=False

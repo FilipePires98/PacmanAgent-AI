@@ -26,8 +26,8 @@ async def agent_loop(server_address = "localhost:8000", agent_name="student"):
             r = await websocket.recv()
             state = json.loads(r) #receive game state
 
-            if len(state['energy'])==0:
-                break
+            if len(state['energy'])==0 and len(state['boost'])==0:
+                return 
             
             if not state['lives']:
                 print("GAME OVER")
@@ -55,6 +55,8 @@ async def agent_loop(server_address = "localhost:8000", agent_name="student"):
                     runG.append(g[0])
 
             energies=[x for x in state['energy'] if all(abs(x[0]-y[0])+abs(x[1]-y[1])>3 for y in state['boost'])]
+            if energies==[]:
+            	energies=state['boost']
             if any(abs(state['pacman'][0]-z[0][0])+abs(state['pacman'][1]-z[0][1])<3 for z in state['ghosts']):
                 getBoost=True
             else:
