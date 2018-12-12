@@ -107,7 +107,7 @@ class SearchTree:
                     #    direct=node.direction
                     lnewnodes += [SearchNode(newstate, node, energies, boosts, direct, node.cost+self.problem.domain.cost(a), self.problem.domain.heuristic(newstate, closestEnergy, energies, boosts, node.boost, self.ghost,a, getBoost))]
             self.add_to_open(lnewnodes)
-            print(self.open_nodes)
+            #print(self.open_nodes)
             return self.open_nodes[0].direction
         return None
 
@@ -181,7 +181,7 @@ class Pacman(SearchDomain):
 
     def heuristic(self,state, closestEnergy, energies,remboosts, boosts, ghosts,act, getBoost):
         if getBoost and boosts!=[]:
-            return ((len(energies)*5+len(remboosts)) + self.costFromTo(state, self.getClosest(state, boosts))) if not any(self.ghostInPath(act, x) for x in boosts) else 0
+            return (len(energies)*5+len(remboosts)) + self.costFromTo(state, self.getClosest(state, boosts))
         else:
             return (len(energies)*10+len(remboosts)) + self.costFromTo(state, closestEnergy)
 
@@ -393,3 +393,13 @@ class Pacman(SearchDomain):
 
         return True
 
+    def ghostInSafeZone(self,ghost):
+        xIn=0
+        yIn=0
+        xOut=self.mapa.size[0]-1
+        yOut=self.mapa.size[1]-1
+
+        if(ghost[0]==xIn or ghost[0]==xOut or ghost[1]==yIn or ghost[1]==yOut):
+            return True
+
+        return False
