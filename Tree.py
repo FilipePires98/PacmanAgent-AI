@@ -1,24 +1,7 @@
-
-# Modulo: tree_search
-# 
-# Fornece um conjunto de classes para suporte a resolucao de 
-# problemas por pesquisa em arvore:
-#    SearchDomain  - dominios de problemas
-#    SearchProblem - problemas concretos a resolver 
-#    SearchNode    - nos da arvore de pesquisa
-#    SearchTree    - arvore de pesquisa, com metodos para 
-#                    a respectiva construcao
-#
-#  (c) Luis Seabra Lopes
-#  Introducao a Inteligencia Artificial, 2012-2018,
-#  Inteligência Artificial, 2014-2018
-
 from abc import ABC, abstractmethod
 from math import sqrt
 from random import randint
-# Dominios de pesquisa
-# Permitem calcular
-# as accoes possiveis em cada estado, etc
+# Modelo fornecido pelo professor
 class SearchDomain(ABC):
 
     # construtor
@@ -79,37 +62,24 @@ class SearchTree:
         root = SearchNode(problem.initial, None, energy, boost)
         self.open_nodes = [root]
 
-    # obter o caminho (sequencia de estados) da raiz ate um no
-    '''
-    def get_path(self,node):
-        if node.parent == None:
-            return [node.direction]
-        path = self.get_path(node.parent)
-        path += [node.direction]
-        return path 
-    '''
-
     # procurar a solucao
     def search(self, getBoost):
         while self.open_nodes != []:
-            #for z in range(5):
             node = self.open_nodes.pop(0)
             closestEnergy=self.problem.domain.getClosest(node.state, node.energy)
             lnewnodes = []
-            #self.problem.domain.runAway(self.problem.domain.actions(node.state),self.ghost)
-            act = self.problem.domain.runAway(self.problem.domain.actions(node.state),self.ghost,self.pastGhost)
+            act = self.problem.domain.runAway(self.problem.domain.actions(node.state),self.ghost)
             for a in act:
                 newstate = self.problem.domain.result(node.state,a)
                 if not self.is_parent(newstate, node):
                     energies=self.problem.domain.remainingEnergies(node.state, newstate, node.energy)
                     boosts=self.problem.domain.remainingBoosts(node.state, newstate,node.boost)
-                    #if z==0:
+
                     direct=self.problem.domain.getDirection(node.state,newstate) if node.direction==None else node.direction
-                    #else:
-                    #    direct=node.direction
+
                     lnewnodes += [SearchNode(newstate, node, energies, boosts, direct, node.cost+self.problem.domain.cost(a), self.problem.domain.heuristic(newstate, closestEnergy, energies, boosts, node.boost, self.ghost,a, getBoost))]
             self.add_to_open(lnewnodes)
-            print(self.open_nodes)
+            #print(self.open_nodes)
             return self.open_nodes[0].direction
         return None
 
@@ -121,7 +91,7 @@ class SearchTree:
             if closestGhost==[]:
                 return None
             lnewnodes = []
-            act=self.problem.domain.runAway(self.problem.domain.actions(node.state),runG,self.pastGhost)
+            act=self.problem.domain.runAway(self.problem.domain.actions(node.state),runG)
             for a in act:
                 newstate = self.problem.domain.result(node.state,a)
                 if not self.is_parent(newstate, node):
@@ -147,22 +117,25 @@ class SearchTree:
 
 
 
-
+#Meu dominio
 class Pacman(SearchDomain):
     def __init__(self,mapa):
         self.nodes=self.findNodes([(x,y) for x in range(mapa.size[0]) for y in range(mapa.size[1]) if not mapa.is_wall((x,y))])
         self.mapa=mapa
 
+    #acoes para determinado estado
     def actions(self,state):
         actlist = []
         act=self.possibleAction(state)
         return act
 
+    #resultado da acao
     def result(self,state,action):
         (C1,C2) = action
         if C1==state:   
             return C2
 
+    #custo de um resultante de uma acao
     def cost(self, action):
         xOut=self.mapa.size[0]-1
         yOut=self.mapa.size[1]-1
@@ -182,20 +155,26 @@ class Pacman(SearchDomain):
                 aux=(aux[0],(aux[1]+1)%yOut)
         return cost
 
+    #heuristica ate ao objetico
     def heuristic(self,state, closestEnergy, energies,remboosts, boosts, ghosts,act, getBoost):
         if getBoost and boosts!=[]:
             return (len(energies)*5+len(remboosts)) + self.costFromTo(state, self.getClosest(state, boosts)) if not self.ghostInPath(act,boosts) else 0
         else:
             return (len(energies)*10+len(remboosts)) + self.costFromTo(state, closestEnergy)
 
+    #heuristica caso o objetivo seja comer um fantasma
     def heuristicGhost(self,state, eatableG, closestGhost,act):
         ghst=[list(x) for x in eatableG if abs(x[0]-closestGhost[0])+abs(x[1]-closestGhost[1])==min(abs(y[0]-closestGhost[0])+abs(y[1]-closestGhost[1]) for y in eatableG)]
         cst=self.costFromTo(state, closestGhost)
         notInPath=1000+cst if not self.ghostInPath(act, ghst) else cst
         return notInPath
 
+
+
+
     # aux functions
-    '''
+    
+    #algoritmo para fugir dos fantasmas
     def runAway(self, actions, ghosts):
         if ghosts==[]:
             return actions
@@ -207,43 +186,9 @@ class Pacman(SearchDomain):
             dists=[min([abs(x[1][0]-g[0])+abs(x[1][1]-g[1]) for g in ghosts]) for x in aux]
             act=[actions[dists.index(max(dists))]]
         return act
-    '''
-    def runAway(self, actions, ghosts, pastGhosts):
-        if len(ghosts)==1:
-            return actions
-        ghosts = self.futureGhosts(ghosts, pastGhosts)
-        aux=[x for x in actions if not self.ghostInPath(x, ghosts)]
-        if len(aux)==0:
-            aux=actions
-        act=[x for x in aux if min([abs(x[1][0]-g[0])+abs(x[1][1]-g[1]) for g in ghosts])>2]
-        if act==[]:
-            dists=[min([abs(x[1][0]-g[0])+abs(x[1][1]-g[1]) for g in ghosts]) for x in aux]
-            act=[actions[dists.index(max(dists))]]
-        return act
-
-    def futureGhosts(self, ghosts, pastGhosts):
-        if len(pastGhosts)==len(ghosts)-1:
-            pastGhosts.append(pastGhosts[0])
-        fg = []
-        print(ghosts)
-        print(pastGhosts)
-        for i,g in enumerate(ghosts):
-            pg = pastGhosts[i]
-            p1=(g[0], g[1]+1)
-            p2=(g[0], g[1]-1)
-            p3=(g[0]+1, g[1])
-            p4=(g[0]-1, g[1])
-            if p1 != pg and not self.mapa.is_wall(p1):
-                fg.append(p1)
-            if p2 != pg and not self.mapa.is_wall(p2):
-                fg.append(p2)
-            if p3 != pg and not self.mapa.is_wall(p3):
-                fg.append(p3)
-            if p4 != pg and not self.mapa.is_wall(p4):
-                fg.append(p4)
-        return fg
 
 
+    #algoritmo para verificacao se algum fantasma se encontra na acao pertendida
     def ghostInPath(self, action, ghosts):
         ret=False
         xOut=self.mapa.size[0]-1
@@ -268,8 +213,8 @@ class Pacman(SearchDomain):
         return ret
 
 
+    #retorna o custo real de ir de um nó para o outro tendo que o nó de destino ser um cruzamento(isto é, pertencer à lista nodes)
     def costFromTo(self, state1, state2):
-        #print(state1,state2)
         aux=[(state1,0)]
         while state2 not in [x[0] for x in aux]:
             st=aux.pop(0)
@@ -278,6 +223,7 @@ class Pacman(SearchDomain):
             aux+=[(x[1], st[1]+sqrt((st[0][0]-x[1][0])**2 + (st[0][1]-x[1][1])**2)) for x in actions if x[1] not in visitedstates]
         return [x[1] for x in aux if x[0]==state2][0]
 
+    #funcao que dado todo o mapa calcula todos os nós, isto é, todos os cruzamentos e intercecoes
     def findNodes(self, allPositions):
         n = []
         for p1 in allPositions:
@@ -291,6 +237,7 @@ class Pacman(SearchDomain):
                 n.append(p1)
         return list(set(n))
 
+    #dados duas posicoes devolve a direcao necessaria para ir da posicao 1 ate a posicao 2
     def getDirection(self, state1, state2):
         xOut=self.mapa.size[0]-1
         yOut=self.mapa.size[1]-1
@@ -311,6 +258,7 @@ class Pacman(SearchDomain):
                     return 'd'
             return 'a'
 
+    #retorna todas as acoes possiveis para uma dada posicao(maximo de 4, wasd)
     def possibleAction(self, state1):
         dir1=state1
         dir2=state1
@@ -358,6 +306,8 @@ class Pacman(SearchDomain):
                     aux+=[(state1,dir4)]
         return aux
 
+
+    #retorna as energias restantes depois de um movimento
     def remainingEnergies(self, node, state, energy):
         xOut=self.mapa.size[0]-1
         yOut=self.mapa.size[1]-1
@@ -376,6 +326,7 @@ class Pacman(SearchDomain):
                 aux=(aux[0],(aux[1]+1)%yOut)
         return [x for x in energy if tuple(x) not in path]
 
+    #retorna os boosts restantes depois de um movimento
     def remainingBoosts(self, node, state, boost):
         xOut=self.mapa.size[0]-1
         yOut=self.mapa.size[1]-1
@@ -394,16 +345,13 @@ class Pacman(SearchDomain):
                 aux=(aux[0],(aux[1]+1)%yOut)
         return [x for x in boost if tuple(x) not in path]
 
+
+    #verifica se é um node, isto e, pertence a lista nodes
     def isNode(self, state):
         return state in self.nodes
 
-    '''
-    def getClosest(self, state, Energies):
-        minimo=min([sqrt((state[0]-x[0])**2 + (state[1]-x[1])**2) for x in Energies])
-        Energy=[x for x in Energies if sqrt((state[0]-x[0])**2 + (state[1]-x[1])**2)==minimo][0]
-        return Energy
-    '''
 
+    #retorna o node mais proximo do state mais proximo pertencente a lista de states fornecido
     def getClosest(self, state, states):
         minimo=min([(abs(state[0]-x[0])+abs(state[1]-x[1])) for x in states])
         Energy=[x for x in states if (abs(state[0]-x[0])+abs(state[1]-x[1]))==minimo][0]
@@ -412,6 +360,7 @@ class Pacman(SearchDomain):
         node=aux[randint(0,len(aux)-1)]
         return node
 
+    #verifica se a posicao e segura, isto e, se nao existe ghosts a sua volta
     def d8(self, cell, ghosts):
         if (cell[0], cell[1]+1) in ghosts:
             return False
@@ -432,6 +381,7 @@ class Pacman(SearchDomain):
 
         return True
 
+    #verifica se o ghost esta numa zona segura, no caso, se nao se encontra nas margens
     def ghostInSafeZone(self,ghost):
         xIn=0
         yIn=0
