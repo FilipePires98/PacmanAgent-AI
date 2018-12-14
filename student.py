@@ -16,12 +16,14 @@ async def agent_loop(server_address = "localhost:8000", agent_name="student"):
         game_properties = json.loads(msg) 
          
         mapa = Map(game_properties['map'])
+        ghosts_level = game_properties['ghosts_level']
         #print(game_properties)
         pacman=Pacman(mapa)
         #init agent properties 
         key = None
         cur_x, cur_y = None, None
         map_center = None
+        first_iteration = True
         while True: 
             r = await websocket.recv()
             state = json.loads(r) #receive game state
@@ -35,11 +37,16 @@ async def agent_loop(server_address = "localhost:8000", agent_name="student"):
 
             x, y = state['pacman']
 
+            if not first_iteration:
+            	pastGhosts = runG[:]
+
             #if pacman.isNode((x,y)) or key==None:
             eatGhost=False
             ghosts=[]
             eatableG=[]
             runG=[]
+
+            
 
             if map_center==None and state['ghosts']!=[]:
                 map_center = tuple(state['ghosts'][0][0])
@@ -54,6 +61,12 @@ async def agent_loop(server_address = "localhost:8000", agent_name="student"):
                 else:
                     runG.append(g[0])
 
+            if first_iteration or (prevEatGhost==True and eatGhost==False):
+            	first_iteration = False
+            	pastGhosts = runG[:]
+
+
+            prevEatGhost=eatGhost
             energies=[x for x in state['energy'] if all(abs(x[0]-y[0])+abs(x[1]-y[1])>3 for y in state['boost'])]
             if energies==[]:
             	energies=state['boost']
@@ -65,14 +78,17 @@ async def agent_loop(server_address = "localhost:8000", agent_name="student"):
                 energies=state['energy']
 
             p = SearchProblem(pacman, tuple(state['pacman']))
-            t = SearchTree(p, energies, state['boost'], runG)
+            t = SearchTree(p, energies, state['boost'], runG, pastGhosts)
             #print(len(state['energy']), len(state['boost']), len(ghosts))
-            eatableG=[x[0] for x in eatableG if (abs(state['pacman'][0]-x[0][0])+abs(state['pacman'][1]-x[0][1]))<5] #x[2]
+            if(ghosts_level==3 and len(ghosts)>2):
+            	eatableG=[x[0] for x in eatableG if not pacman.ghostInSafeZone(x) and (abs(state['pacman'][0]-x[0][0])+abs(state['pacman'][1]-x[0][1]))<x[2] and (abs(state['pacman'][0]-x[0][0])+abs(state['pacman'][1]-x[0][1]))<6]
+            else:
+            	eatableG=[x[0] for x in eatableG if not pacman.ghostInSafeZone(x) and (abs(state['pacman'][0]-x[0][0])+abs(state['pacman'][1]-x[0][1]))<x[2]]
 
             if eatGhost and len(ghosts)>0:
                 eatableG = [eg for eg in eatableG if pacman.d8(eg,runG)] 
                 if eatableG!=[]:
-                    key=t.searchGhost(eatableG, runG)
+                    key = t.searchGhost(eatableG)
                 else:
                     key = t.search(getBoost)
             else:

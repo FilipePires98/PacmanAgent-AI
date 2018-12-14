@@ -15,6 +15,7 @@
 
 from abc import ABC, abstractmethod
 from math import sqrt
+from random import randint
 # Dominios de pesquisa
 # Permitem calcular
 # as accoes possiveis em cada estado, etc
@@ -71,9 +72,10 @@ class SearchNode:
 class SearchTree:
 
     # construtor
-    def __init__(self,problem, energy=None, boost=None, ghost=[]): 
+    def __init__(self,problem, energy=None, boost=None, ghost=[], pastGhost=[]): 
         self.problem = problem
         self.ghost=ghost
+        self.pastGhost=pastGhost
         root = SearchNode(problem.initial, None, energy, boost)
         self.open_nodes = [root]
 
@@ -95,7 +97,7 @@ class SearchTree:
             closestEnergy=self.problem.domain.getClosest(node.state, node.energy)
             lnewnodes = []
             #self.problem.domain.runAway(self.problem.domain.actions(node.state),self.ghost)
-            act = self.problem.domain.runAway(self.problem.domain.actions(node.state),self.ghost)
+            act = self.problem.domain.runAway(self.problem.domain.actions(node.state),self.ghost,self.pastGhost)
             for a in act:
                 newstate = self.problem.domain.result(node.state,a)
                 if not self.is_parent(newstate, node):
@@ -111,14 +113,15 @@ class SearchTree:
             return self.open_nodes[0].direction
         return None
 
-    def searchGhost(self, eatableG, runG):
+    def searchGhost(self, eatableG):
+        runG = self.ghost[:]
         while self.open_nodes != []:
             node = self.open_nodes.pop(0)
             closestGhost=self.problem.domain.getClosest(node.state,eatableG)
             if closestGhost==[]:
                 return None
             lnewnodes = []
-            act=self.problem.domain.runAway(self.problem.domain.actions(node.state),runG)
+            act=self.problem.domain.runAway(self.problem.domain.actions(node.state),runG,self.pastGhost)
             for a in act:
                 newstate = self.problem.domain.result(node.state,a)
                 if not self.is_parent(newstate, node):
@@ -181,7 +184,7 @@ class Pacman(SearchDomain):
 
     def heuristic(self,state, closestEnergy, energies,remboosts, boosts, ghosts,act, getBoost):
         if getBoost and boosts!=[]:
-            return ((len(energies)*5+len(remboosts)) + self.costFromTo(state, self.getClosest(state, boosts))) if not any(self.ghostInPath(act, x) for x in boosts) else 0
+            return (len(energies)*5+len(remboosts)) + self.costFromTo(state, self.getClosest(state, boosts)) if not self.ghostInPath(act,boosts) else 0
         else:
             return (len(energies)*10+len(remboosts)) + self.costFromTo(state, closestEnergy)
 
@@ -192,7 +195,7 @@ class Pacman(SearchDomain):
         return notInPath
 
     # aux functions
-    
+    '''
     def runAway(self, actions, ghosts):
         if ghosts==[]:
             return actions
@@ -204,6 +207,41 @@ class Pacman(SearchDomain):
             dists=[min([abs(x[1][0]-g[0])+abs(x[1][1]-g[1]) for g in ghosts]) for x in aux]
             act=[actions[dists.index(max(dists))]]
         return act
+    '''
+    def runAway(self, actions, ghosts, pastGhosts):
+        if len(ghosts)==1:
+            return actions
+        ghosts = self.futureGhosts(ghosts, pastGhosts)
+        aux=[x for x in actions if not self.ghostInPath(x, ghosts)]
+        if len(aux)==0:
+            aux=actions
+        act=[x for x in aux if min([abs(x[1][0]-g[0])+abs(x[1][1]-g[1]) for g in ghosts])>2]
+        if act==[]:
+            dists=[min([abs(x[1][0]-g[0])+abs(x[1][1]-g[1]) for g in ghosts]) for x in aux]
+            act=[actions[dists.index(max(dists))]]
+        return act
+
+    def futureGhosts(self, ghosts, pastGhosts):
+        if len(pastGhosts)==len(ghosts)-1:
+            pastGhosts.append(pastGhosts[0])
+        fg = []
+        print(ghosts)
+        print(pastGhosts)
+        for i,g in enumerate(ghosts):
+            pg = pastGhosts[i]
+            p1=(g[0], g[1]+1)
+            p2=(g[0], g[1]-1)
+            p3=(g[0]+1, g[1])
+            p4=(g[0]-1, g[1])
+            if p1 != pg and not self.mapa.is_wall(p1):
+                fg.append(p1)
+            if p2 != pg and not self.mapa.is_wall(p2):
+                fg.append(p2)
+            if p3 != pg and not self.mapa.is_wall(p3):
+                fg.append(p3)
+            if p4 != pg and not self.mapa.is_wall(p4):
+                fg.append(p4)
+        return fg
 
 
     def ghostInPath(self, action, ghosts):
@@ -370,7 +408,8 @@ class Pacman(SearchDomain):
         minimo=min([(abs(state[0]-x[0])+abs(state[1]-x[1])) for x in states])
         Energy=[x for x in states if (abs(state[0]-x[0])+abs(state[1]-x[1]))==minimo][0]
         minimo2=min([(abs(Energy[0]-x[0])+abs(Energy[1]-x[1])) for x in self.nodes])
-        node=[x for x in self.nodes if (abs(Energy[0]-x[0])+abs(Energy[1]-x[1]))==minimo2][0]
+        aux=[x for x in self.nodes if (abs(Energy[0]-x[0])+abs(Energy[1]-x[1]))==minimo2]
+        node=aux[randint(0,len(aux)-1)]
         return node
 
     def d8(self, cell, ghosts):
@@ -393,3 +432,13 @@ class Pacman(SearchDomain):
 
         return True
 
+    def ghostInSafeZone(self,ghost):
+        xIn=0
+        yIn=0
+        xOut=self.mapa.size[0]-1
+        yOut=self.mapa.size[1]-1
+
+        if(ghost[0]==xIn or ghost[0]==xOut or ghost[1]==yIn or ghost[1]==yOut):
+            return True
+
+        return False
