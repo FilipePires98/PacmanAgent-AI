@@ -7,7 +7,7 @@ The purpose of this work is to develop an agent capable of playing in a clever w
 Several agents competed for the highest score when exposed to other agents (the ghosts) implemented by professor [Diogo Gomes](https://github.com/dgomes) and other contributors.
 Our Pacman was the **winner agent of 2018**. 
 
-![](https://github.com/FilipePires98/PacmanAgent-AI/docs/pacman_gameplay.gif)
+![demo](https://github.com/FilipePires98/PacmanAgent-AI/blob/master/docs/pacman_gameplay.gif)
 
 ## Repository Structure
 
