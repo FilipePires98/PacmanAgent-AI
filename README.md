@@ -4,7 +4,9 @@ An Artificial Intelligent Agent that plays Pacman
 ## Description
 
 The purpose of this work is to develop an agent capable of playing in a clever way the Pacman game, an arcade game that has become popular in the last century.
+
 Several agents competed for the highest score when exposed to other agents (the ghosts) implemented by professor [Diogo Gomes](https://github.com/dgomes) and other contributors.
+
 Our Pacman was the **winner agent of 2018**. 
 
 ![demo](https://github.com/FilipePires98/PacmanAgent-AI/blob/master/docs/pacman_gameplay.gif)
