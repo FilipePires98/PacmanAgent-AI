@@ -1,6 +1,12 @@
 # Pacman AI Agent
 An Artificial Intelligent Agent that plays Pacman
 
+![](https://img.shields.io/badge/Academical%20Project-Yes-success)
+![](https://img.shields.io/badge/2018%20Competition-Winner%20Agent-yellow)
+![](https://img.shields.io/badge/OS-Linux-blue)
+![](https://img.shields.io/badge/Made%20with-Python-blue)
+![](https://img.shields.io/badge/Maintained-No-red)
+
 ## Description
 
 The purpose of this work is to develop an agent capable of playing in a clever way the Pacman game, an arcade game that has become popular in the last century.
