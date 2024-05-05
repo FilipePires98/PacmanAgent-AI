@@ -61,7 +61,7 @@ $ python client.py
 The authors of the base code are mainly professores Diogo Gomes and Mario Antunes.
 The authors of this specific implementation of the Pacman agent are Filipe Pires and João Alegria.
 
-For further information, please contact us at filipesnetopires@ua.pt or joao.p@ua.pt.
+For further information, please contact us at fsnap@protonmail.com or joao.p@ua.pt.
 
 # Credits
 Sprites from https://github.com/rm-hull/big-bang/tree/master/examples/pacman/data
